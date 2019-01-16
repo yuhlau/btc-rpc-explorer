@@ -41,13 +41,14 @@ router.get("/", function(req, res) {
 	promises.push(coreApi.getMempoolInfo());
 	promises.push(coreApi.getMiningInfo());
 
-	var chainTxStatsIntervals = [ 144, 144 * 7, 144 * 30, 144 * 265 ];
-	res.locals.chainTxStatsLabels = [ "24 hours", "1 week", "1 month", "1 year", "All time" ];
-	for (var i = 0; i < chainTxStatsIntervals.length; i++) {
-		promises.push(coreApi.getChainTxStats(chainTxStatsIntervals[i]));
-	}
-
 	coreApi.getBlockchainInfo().then(function(getblockchaininfo) {
+		if (getblockchaininfo.chain !== 'regtest') {
+			var chainTxStatsIntervals = [ 144, 144 * 7, 144 * 30, 144 * 265 ];
+			res.locals.chainTxStatsLabels = [ "24 hours", "1 week", "1 month", "1 year", "All time" ];
+			for (var i = 0; i < chainTxStatsIntervals.length; i++) {
+				promises.push(coreApi.getChainTxStats(chainTxStatsIntervals[i]));
+			}
+		}
 		res.locals.getblockchaininfo = getblockchaininfo;
 
 		var blockHeights = [];
@@ -66,12 +67,14 @@ router.get("/", function(req, res) {
 				res.locals.mempoolInfo = promiseResults[0];
 				res.locals.miningInfo = promiseResults[1];
 
-				var chainTxStats = [];
-				for (var i = 0; i < res.locals.chainTxStatsLabels.length; i++) {
-					chainTxStats.push(promiseResults[i + 2]);
-				}
+				if (getblockchaininfo.chain !== 'regtest') {
+					var chainTxStats = [];
+					for (var i = 0; i < res.locals.chainTxStatsLabels.length; i++) {
+						chainTxStats.push(promiseResults[i + 2]);
+					}
 
-				res.locals.chainTxStats = chainTxStats;
+					res.locals.chainTxStats = chainTxStats;
+				}
 
 				res.render("index");
 			});
